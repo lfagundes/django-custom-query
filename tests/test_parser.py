@@ -73,4 +73,13 @@ class ParenthesisTest(BaseTest):
         expected = Q(numfield=1) | (Q(numfield__gt=5) & (Q(numfield__lte=10) | Q(charfield="foobar")))
 
         self.assertEquals(self.parse(query), expected)
+
+class BetweenTest(BaseTest):
+
+    def test_between_number(self):
+        self.assertEquals(self.parse('numfield between 1 and 5'), Q(numfield__gte=1) & Q(numfield__lte=5))
+        
+    def test_between_char(self):
+        self.assertEquals(self.parse('charfield between "foo" and "foo bar"'),
+                          Q(charfield__gte="foo") & Q(charfield__lte="foo bar"))
         

@@ -17,14 +17,27 @@ class Parser:
             return self.resolve(tokens[0])
         if tokens[0].match(t.Token.Punctuation, '(') and tokens[-1].match(t.Token.Punctuation, ')'):
             tokens = tokens[1:-1]
-        if tokens[1].ttype is t.Token.Keyword:
-            a = self.resolve(tokens[0])
-            b = self.resolve(tokens[2])
-            return self.operate(a, tokens[1], b)
+        operator = tokens[1]
+        if operator.ttype is t.Token.Keyword:
+            if operator.match(t.Token.Keyword, 'BETWEEN'):
+                assert(len(tokens) == 5)
+                return self.between(tokens[0], tokens[2], tokens[4])
+            else:
+                a = self.resolve(tokens[0])
+                b = self.resolve(tokens[2])
+                return self.operate(a, tokens[1], b)
         else:
+                    
             if len(tokens) > 3:
                 import ipdb; ipdb.set_trace()
             return self.compare(*tokens)
+
+    def between(self, subject, floor, ceil):
+        gte = parse('a>=1')[0].tokens[0].tokens[1]
+        lte = parse('a<=1')[0].tokens[0].tokens[1]
+        first = self.resolve([subject, gte, floor])
+        second = self.resolve([subject, lte, ceil])
+        return first & second
 
     def operate(self, a, operator, b):
         if operator.match(t.Token.Keyword, 'OR'):
