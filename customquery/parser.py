@@ -9,7 +9,7 @@ class Parser:
     def parse(self, query):
         result = Q()
         parsed = parse(query)[0]
-        tokens = [ tok for tok in parsed.tokens if not tok.ttype is t.Token.Text.Whitespace ]
+        tokens = self._remove_whitespaces(parsed.tokens[0])
         return self.compare(tokens)
 
     def compare(self, tokens):
@@ -50,3 +50,6 @@ class Parser:
         if op.match(comp, '!='):
             return [key, False]        
         return [key, True]
+
+    def _remove_whitespaces(self, tokens):
+        return [ tok for tok in tokens if not tok.ttype is t.Token.Text.Whitespace ]
