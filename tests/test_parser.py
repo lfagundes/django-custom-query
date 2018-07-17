@@ -44,3 +44,20 @@ class SingleParserTest(BaseTest):
         self.assertEquals(self.parse('charfield="foo bar"'), Q(charfield="foo bar"))
         self.assertEquals(self.parse("charfield='foo bar'"), Q(charfield="foo bar"))
 
+class SimpleOperatorTest(BaseTest):
+
+    def test_or(self):
+        self.assertEquals(self.parse('numfield=1 or charfield="foo"'),
+                          Q(numfield=1) | Q(charfield="foo"))
+        self.assertEquals(self.parse('numfield=1 OR charfield="foo"'),
+                          Q(numfield=1) | Q(charfield="foo"))
+        self.assertEquals(self.parse('numfield = 1 or charfield="foo"'),
+                          Q(numfield=1) | Q(charfield="foo"))
+        self.assertEquals(self.parse("numfield=1 OR charfield = 'foo'"),
+                          Q(numfield=1) | Q(charfield="foo"))
+    def test_and(self):
+        self.assertEquals(self.parse('numfield=1 and charfield="foo"'),
+                          Q(numfield=1) & Q(charfield="foo"))
+        self.assertEquals(self.parse('numfield=1 AND charfield="foo"'),
+                          Q(numfield=1) & Q(charfield="foo"))
+        

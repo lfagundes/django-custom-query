@@ -9,23 +9,36 @@ class Parser:
     def parse(self, query):
         result = Q()
         parsed = parse(query)[0]
-        tokens = self._remove_whitespaces(parsed.tokens[0])
-        return self.compare(tokens)
+        return self.resolve(parsed.tokens)
 
-    def compare(self, tokens):
-        assert len(tokens) == 3
-        (identifier, comparison, value) = tokens
+    def resolve(self, tokens):
+        tokens = [ tok for tok in tokens if not tok.ttype is t.Token.Text.Whitespace ]
+        if len(tokens) == 1:
+            return self.resolve(tokens[0])
+        if tokens[1].ttype is t.Token.Keyword:
+            a = self.resolve(tokens[0])
+            b = self.resolve(tokens[2])
+            return self.operate(a, tokens[1], b)
+        else:
+            return self.compare(*tokens)
 
-        key = identifier.value
-        key, cond = self.make_key(comparison, key)
+    def operate(self, a, operator, b):
+        if operator.match(t.Token.Keyword, 'OR'):
+            return a | b
+        if operator.match(t.Token.Keyword, 'AND'):
+            return a & b
+
+    def compare(self, subject, operator, predicate):
+        key = subject.value
+        key, cond = self.make_key(operator, key)
         kwargs = {}
         
-        if value.ttype is t.Token.Literal.Number.Integer:
-            kwargs[key] = int(value.value)
-        elif isinstance(value, sql.Identifier):
-            kwargs[key] = value.get_name()
-        elif value.ttype is t.Token.Literal.String.Single:
-            v = value.value
+        if predicate.ttype is t.Token.Literal.Number.Integer:
+            kwargs[key] = int(predicate.value)
+        elif isinstance(predicate, sql.Identifier):
+            kwargs[key] = predicate.get_name()
+        elif predicate.ttype is t.Token.Literal.String.Single:
+            v = predicate.value
             if v.startswith("'") and v.endswith("'"):
                 v = v[1:-1]
             kwargs[key] = v
@@ -50,6 +63,3 @@ class Parser:
         if op.match(comp, '!='):
             return [key, False]        
         return [key, True]
-
-    def _remove_whitespaces(self, tokens):
-        return [ tok for tok in tokens if not tok.ttype is t.Token.Text.Whitespace ]
