@@ -1,0 +1,1 @@
+If you want to let users write conditions using AND, OR and parenthesis grouping, this module will translate those to Django ORM Q objects.
