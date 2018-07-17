@@ -1,5 +1,5 @@
 from django.test import TestCase
-from customquery import Parser
+from customquery import Parser, exceptions
 from .models import TestModel
 from django.db.models import Q
 
@@ -82,4 +82,32 @@ class BetweenTest(BaseTest):
     def test_between_char(self):
         self.assertEquals(self.parse('charfield between "foo" and "foo bar"'),
                           Q(charfield__gte="foo") & Q(charfield__lte="foo bar"))
+
+class ValidationTest(BaseTest):
+
+    def test_field_must_exist_in_model(self):
+        # Use field that is not present on TestModel
+        try:
+            self.parse("unknown > 10")
+        except exceptions.FieldDoesNotExist as e:
+            self.assertEquals(e.field, 'unknown')
+        else:
+            self.fail("Unknown field shouldn't be accepted")
+
+    def test_parenthesis_must_match(self):
+        try:
+            self.parse("(numfield > 10")
+        except exceptions.ParenthesisDontMatch:
+            pass
+        else:
+            self.fail("Parenthesis matching is not properly validated")
+
+    def test_check_unknown_operator(self):
+        try:
+            parsed = self.parse("numfield ? 10")
+            import ipdb; ipdb.set_trace()
+        except exceptions.UnknownOperator as e:
+            self.assertEquals(e.operator, "?")
+        else:
+            self.fail("Operator should be checked")
         

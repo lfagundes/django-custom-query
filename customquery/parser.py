@@ -1,5 +1,8 @@
 from sqlparse import parse, tokens as t, sql
+from django.core import exceptions as django_exceptions
+from . import exceptions
 from django.db.models import Q
+
 
 class Parser:
 
@@ -15,8 +18,11 @@ class Parser:
         tokens = [ tok for tok in tokens if not tok.ttype is t.Token.Text.Whitespace ]
         if len(tokens) == 1:
             return self.resolve(tokens[0])
-        if tokens[0].match(t.Token.Punctuation, '(') and tokens[-1].match(t.Token.Punctuation, ')'):
-            tokens = tokens[1:-1]
+        if tokens[0].match(t.Token.Punctuation, '('):
+            if tokens[-1].match(t.Token.Punctuation, ')'):
+                tokens = tokens[1:-1]
+            else:
+                raise exceptions.ParenthesisDontMatch()
         operator = tokens[1]
         if operator.ttype is t.Token.Keyword:
             if operator.match(t.Token.Keyword, 'BETWEEN'):
@@ -47,6 +53,11 @@ class Parser:
 
     def compare(self, subject, operator, predicate):
         key = subject.value
+        # Raise exception if field does not exist
+        try:
+            self.model._meta.get_field(key)
+        except django_exceptions.FieldDoesNotExist:
+            raise exceptions.FieldDoesNotExist(key)
         key, cond = self.make_key(operator, key)
         kwargs = {}
         
@@ -67,6 +78,8 @@ class Parser:
 
     def make_key(self, op, key):
         comp = t.Token.Operator.Comparison
+        if op.match(comp, '='):
+            return [key, True]
         if op.match(comp, '>'):
             return [key + '__gt', True]
         if op.match(comp, '>='):
@@ -78,5 +91,5 @@ class Parser:
         if op.match(comp, '<>'):
             return [key, False]
         if op.match(comp, '!='):
-            return [key, False]        
-        return [key, True]
+            return [key, False]
+        raise exceptions.UnknownOperator(op.normalized)
