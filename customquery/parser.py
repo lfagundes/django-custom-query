@@ -15,11 +15,15 @@ class Parser:
         tokens = [ tok for tok in tokens if not tok.ttype is t.Token.Text.Whitespace ]
         if len(tokens) == 1:
             return self.resolve(tokens[0])
+        if tokens[0].match(t.Token.Punctuation, '(') and tokens[-1].match(t.Token.Punctuation, ')'):
+            tokens = tokens[1:-1]
         if tokens[1].ttype is t.Token.Keyword:
             a = self.resolve(tokens[0])
             b = self.resolve(tokens[2])
             return self.operate(a, tokens[1], b)
         else:
+            if len(tokens) > 3:
+                import ipdb; ipdb.set_trace()
             return self.compare(*tokens)
 
     def operate(self, a, operator, b):
