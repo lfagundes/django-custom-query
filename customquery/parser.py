@@ -36,7 +36,8 @@ class Parser:
         else:
                     
             if len(tokens) > 3:
-                import ipdb; ipdb.set_trace()
+                #import ipdb; ipdb.set_trace()
+                raise Exception("Invalid query")
             return self._compare(*tokens)
 
     def _between(self, subject, floor, ceil):
@@ -76,6 +77,7 @@ class Parser:
 
     def _make_key(self, op, key):
         comp = t.Token.Operator.Comparison
+        key = key.replace('.', '__')
         if op.match(comp, '='):
             return [key, True]
         if op.match(comp, '>'):
@@ -93,6 +95,7 @@ class Parser:
         raise exceptions.UnknownOperator(op.normalized)
 
     def _validate_field(self, model, key):
+        key = key.replace('.', '__')
         path = key.split('__')
         while len(path) > 1:
             model = model._meta.get_field(path.pop(0)).related_model

@@ -47,6 +47,9 @@ class SingleParserTest(BaseTest):
     def test_related_field(self):
         self.assertEquals(self.parse('related__name="foo bar"'), Q(related__name="foo bar"))
 
+    def test_related_field_can_be_acessed_with_doc(self):
+        self.assertEquals(self.parse('related.name="foo bar"'), Q(related__name="foo bar"))
+
 class SimpleOperatorTest(BaseTest):
 
     def test_or(self):
