@@ -9,10 +9,6 @@ Install
 
     $ pip3 install django-custom-query
 
-You can get the `pip command here`_.  
-
-.. _pip command here: http://pip.openplans.org/
-
 django-custom-query was developed and tested on Python 3.5. Is based on `sqlparse`_.
 
 .. _sqlparse: https://github.com/andialbrecht/sqlparse
@@ -63,5 +59,11 @@ django-custom-query was created by Luis Fagundes and was sponsored by `Spatial D
 Changelog
 =========
 
-- 0.1.0 - Initial release, with support for integer and char fields, =, >, <, <=, <=, <>, !=, AND, OR, BETWEEN and parenthesis.
+- 0.2.0
+
+  - Support for filters on models.ForeignKey fields
+
+- 0.1.0
+
+  - Initial release, with support for integer and char fields, =, >, <, <=, <=, <>, !=, AND, OR, BETWEEN and parenthesis.
 
