@@ -44,6 +44,9 @@ class SingleParserTest(BaseTest):
         self.assertEquals(self.parse('charfield="foo bar"'), Q(charfield="foo bar"))
         self.assertEquals(self.parse("charfield='foo bar'"), Q(charfield="foo bar"))
 
+    def test_related_field(self):
+        self.assertEquals(self.parse('related__name="foo bar"'), Q(related__name="foo bar"))
+
 class SimpleOperatorTest(BaseTest):
 
     def test_or(self):
@@ -110,4 +113,3 @@ class ValidationTest(BaseTest):
             self.assertEquals(e.operator, "?")
         else:
             self.fail("Operator should be checked")
-        

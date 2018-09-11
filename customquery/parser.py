@@ -55,10 +55,7 @@ class Parser:
     def _compare(self, subject, operator, predicate):
         key = subject.value
         # Raise exception if field does not exist
-        try:
-            self.model._meta.get_field(key)
-        except django_exceptions.FieldDoesNotExist:
-            raise exceptions.FieldDoesNotExist(key)
+        self._validate_field(self.model, key)
         key, cond = self._make_key(operator, key)
         kwargs = {}
         
@@ -94,3 +91,12 @@ class Parser:
         if op.match(comp, '!='):
             return [key, False]
         raise exceptions.UnknownOperator(op.normalized)
+
+    def _validate_field(self, model, key):
+        path = key.split('__')
+        while len(path) > 1:
+            model = model._meta.get_field(path.pop(0)).related_model
+        try:
+            model._meta.get_field(path[0])
+        except django_exceptions.FieldDoesNotExist:
+            raise exceptions.FieldDoesNotExist(key)
