@@ -1,7 +1,7 @@
 from sqlparse import parse, tokens as t, sql
 from django.core import exceptions as django_exceptions
 from . import exceptions
-from django.db.models import Q
+from django.db.models import Q, QuerySet
 
 class Parser:
 
@@ -95,6 +95,12 @@ class Parser:
         raise exceptions.UnknownOperator(op.normalized)
 
     def _validate_field(self, model, key):
+        if isinstance(model, QuerySet):
+            qs = model
+            if qs.query.annotations.get(key):
+                return True
+            model = qs.model
+
         key = key.replace('.', '__')
         path = key.split('__')
         while len(path) > 1:

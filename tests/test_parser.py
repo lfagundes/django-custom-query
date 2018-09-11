@@ -1,7 +1,8 @@
-from django.test import TestCase
+from django.test import TestCase, tag
 from customquery import Parser, exceptions
 from .models import TestModel
-from django.db.models import Q
+from django.db.models import Q, Value as V
+from django.db.models.functions import Concat
 
 class BaseTest(TestCase):
     def setUp(self):
@@ -49,6 +50,14 @@ class SingleParserTest(BaseTest):
 
     def test_related_field_can_be_acessed_with_doc(self):
         self.assertEquals(self.parse('related.name="foo bar"'), Q(related__name="foo bar"))
+
+class AnnotationTest(BaseTest):
+    def setUp(self):
+        qs = TestModel.objects.annotate(full_name=Concat('first_name', V(' '), 'last_name'))
+        self.parser = Parser(qs)
+
+    def test_annotated_field(self):
+        self.assertEquals(self.parse('full_name="foo bar"'), Q(full_name="foo bar"))
 
 class SimpleOperatorTest(BaseTest):
 

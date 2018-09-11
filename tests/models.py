@@ -8,3 +8,5 @@ class TestModel(models.Model):
     numfield = models.IntegerField()
     datefield = models.DateField()
     related = models.ForeignKey(RelatedModel, on_delete=models.CASCADE)
+    first_name = models.CharField(max_length=16)
+    last_name = models.CharField(max_length=16)
