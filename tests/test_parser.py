@@ -43,6 +43,9 @@ class SingleParserTest(BaseTest):
     def test_in_operator_with_numerical_field(self):
         self.assertEquals(self.parse("numfield IN (1, 2, 3, 4)"), Q(numfield__in=(1, 2, 3, 4)))
 
+    def test_not_in_operator(self):
+        self.assertEquals(self.parse("numfield NOT IN (1, 2, 3, 4)"), ~Q(numfield__in=(1, 2, 3, 4)))
+
     def test_in_operator_with_string_field(self):
         self.assertEquals(self.parse("charfield IN ('one', 'two', 'three')"), Q(charfield__in=('one', 'two', 'three')))
         self.assertEquals(self.parse('charfield IN ("one", "two", "three")'), Q(charfield__in=('one', 'two', 'three')))

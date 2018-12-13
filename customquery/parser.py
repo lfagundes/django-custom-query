@@ -29,8 +29,11 @@ class Parser:
                 assert(len(tokens) == 5)
                 return self._between(tokens[0], tokens[2], tokens[4])
             elif operator.match(t.Token.Keyword, 'NOT'):
-                assert(len(tokens) == 3)
-                return self._compare(*tokens)
+                if len(tokens) == 3:
+                    return self._compare(*tokens)
+                if len(tokens) == 4 and tokens[2].match(t.Token.Keyword, 'IN'):
+                    return ~self._in(tokens[0], tokens[3])
+                raise exceptions.InvalidQuery()
             if operator.match(t.Token.Keyword, 'IN'):
                 return self._in(tokens[0], tokens[2])
             else:

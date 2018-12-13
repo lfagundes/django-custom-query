@@ -19,3 +19,7 @@ class UnknownOperator(Exception):
     def __init__(self, operator):
         self.operator = operator
         super().__init__("Operator '%s' is invalid" % operator)
+
+class InvalidQuery(Exception):
+    def __init__(self):
+        super().__init__("Invalid query")
