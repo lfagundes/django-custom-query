@@ -63,6 +63,7 @@ Changelog
 
   - Support for annotations
   - Support for date formatting
+  - NOT operator
 
 - 0.2.0
 

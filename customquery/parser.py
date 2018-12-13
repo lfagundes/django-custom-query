@@ -31,6 +31,9 @@ class Parser:
             if operator.match(t.Token.Keyword, 'BETWEEN'):
                 assert(len(tokens) == 5)
                 return self._between(tokens[0], tokens[2], tokens[4])
+            elif operator.match(t.Token.Keyword, 'NOT'):
+                assert(len(tokens) == 3)
+                return self._compare(*tokens)
             else:
                 a = self._resolve(tokens[0])
                 b = self._resolve(tokens[2])
@@ -98,6 +101,8 @@ class Parser:
         if op.match(comp, '<>'):
             return [key, False]
         if op.match(comp, '!='):
+            return [key, False]
+        if op.value == 'NOT':
             return [key, False]
         raise exceptions.UnknownOperator(op.normalized)
 

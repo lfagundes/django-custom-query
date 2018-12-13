@@ -50,7 +50,20 @@ Date formatting
     >>> parser = Parser(MyModel, date_format='%d/%m/%Y')
     >>> parser.parse('birthday=13/12/2018')
 
+Operators
+=========
 
-
-
-
+    >>> parser.parse("numfield=1")     # Q(numfield=1))
+    >>> parser.parse("numfield = 1")   # Q(numfield=1))
+    >>> parser.parse("numfield  = 1")  # Q(numfield=1))
+    >>> parser.parse("numfield > 1")   # Q(numfield__gt=1))
+    >>> parser.parse("numfield >= 1")  # Q(numfield__gte=1))
+    >>> parser.parse("numfield < 1")   # Q(numfield__lt=1))
+    >>> parser.parse("numfield <= 1")  # Q(numfield__lte=1))
+    >>> parser.parse("numfield > 1")   # Q(numfield__gt=1))
+    >>> parser.parse("numfield >= 1")  # Q(numfield__gte=1))
+    >>> parser.parse("numfield < 1")   # Q(numfield__lt=1))
+    >>> parser.parse("numfield <= 1")  # Q(numfield__lte=1))
+    >>> parser.parse("numfield <> 1")  # ~Q(numfield=1))
+    >>> parser.parse("numfield != 1")  # ~Q(numfield=1))
+    >>> parser.parse("numfield NOT 1") # ~Q(numfield=1))

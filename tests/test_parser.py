@@ -37,6 +37,9 @@ class SingleParserTest(BaseTest):
         self.assertEquals(self.parse("numfield <> 1"), ~Q(numfield=1))
         self.assertEquals(self.parse("numfield != 1"), ~Q(numfield=1))
 
+    def test_not_as_keyword(self):
+        self.assertEquals(self.parse("numfield NOT 1"), ~Q(numfield=1))
+
     def test_single_string(self):
         self.assertEquals(self.parse('charfield=foo'), Q(charfield="foo"))
         self.assertEquals(self.parse('charfield="foo"'), Q(charfield="foo"))
