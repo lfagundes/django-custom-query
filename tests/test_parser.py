@@ -1,3 +1,4 @@
+from datetime import datetime, date
 from django.test import TestCase, tag
 from customquery import Parser, exceptions
 from .models import TestModel
@@ -125,3 +126,14 @@ class ValidationTest(BaseTest):
             self.assertEquals(e.operator, "?")
         else:
             self.fail("Operator should be checked")
+
+class DateFormatTest(TestCase):
+
+    def test_date_without_format(self):
+        parser = Parser(TestModel)
+        self.assertEquals(parser.parse('datefield="2018-12-13"'), Q(datefield=date(2018, 12, 13)))
+
+    def test_date_with_format(self):
+        parser = Parser(TestModel, date_format='%d/%m/%Y')
+        self.assertEquals(parser.parse('datefield="13/12/2018"'), Q(datefield=date(2018, 12, 13)))
+        self.assertEquals(parser.parse('datefield=13/12/2018'), Q(datefield=date(2018, 12, 13)))

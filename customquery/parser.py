@@ -1,12 +1,14 @@
 from sqlparse import parse, tokens as t, sql
+from datetime import datetime, date
 from django.core import exceptions as django_exceptions
 from . import exceptions
-from django.db.models import Q, QuerySet
+from django.db.models import fields, Q, QuerySet
 
 class Parser:
 
-    def __init__(self, model):
+    def __init__(self, model, date_format='%Y-%m-%d'):
         self.model = model
+        self.date_format = date_format
 
     def parse(self, query):
         """Parse SQL-like condition statements and return Django Q objects"""
@@ -56,18 +58,23 @@ class Parser:
     def _compare(self, subject, operator, predicate):
         key = subject.value
         # Raise exception if field does not exist
-        self._validate_field(self.model, key)
+        field = self._get_field(self.model, key)
         key, cond = self._make_key(operator, key)
         kwargs = {}
-        
-        if predicate.ttype is t.Token.Literal.Number.Integer:
-            kwargs[key] = int(predicate.value)
+
+        v = predicate.value
+        if v.startswith("'") and v.endswith("'"):
+            v = v[1:-1]
+        elif v.startswith('"') and v.endswith('"'):
+            v = v[1:-1]
+
+        if isinstance(field, fields.DateField):
+            kwargs[key] = datetime.strptime(str(v), self.date_format).date()
+        elif predicate.ttype is t.Token.Literal.Number.Integer:
+            kwargs[key] = int(v)
         elif isinstance(predicate, sql.Identifier):
             kwargs[key] = predicate.get_name()
         elif predicate.ttype is t.Token.Literal.String.Single:
-            v = predicate.value
-            if v.startswith("'") and v.endswith("'"):
-                v = v[1:-1]
             kwargs[key] = v
 
         result = Q(**kwargs)
@@ -94,11 +101,11 @@ class Parser:
             return [key, False]
         raise exceptions.UnknownOperator(op.normalized)
 
-    def _validate_field(self, model, key):
+    def _get_field(self, model, key):
         if isinstance(model, QuerySet):
             qs = model
             if qs.query.annotations.get(key):
-                return True
+                return None
             model = qs.model
 
         key = key.replace('.', '__')
@@ -106,6 +113,6 @@ class Parser:
         while len(path) > 1:
             model = model._meta.get_field(path.pop(0)).related_model
         try:
-            model._meta.get_field(path[0])
+            return model._meta.get_field(path[0])
         except django_exceptions.FieldDoesNotExist:
             raise exceptions.FieldDoesNotExist(key)

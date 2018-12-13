@@ -62,6 +62,7 @@ Changelog
 - 0.3.0
 
   - Support for annotations
+  - Support for date formatting
 
 - 0.2.0
 
