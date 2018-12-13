@@ -59,6 +59,10 @@ django-custom-query was created by Luis Fagundes and was sponsored by `Spatial D
 Changelog
 =========
 
+- 0.3.0
+
+  - Support for annotations
+
 - 0.2.0
 
   - Support for filters on models.ForeignKey fields
