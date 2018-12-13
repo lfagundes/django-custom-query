@@ -18,14 +18,11 @@ class Parser:
         return self._resolve(parsed.tokens)
 
     def _resolve(self, tokens):
-        tokens = [ tok for tok in tokens if not tok.ttype is t.Token.Text.Whitespace ]
+        tokens = self._strip_whitespaces(tokens)
         if len(tokens) == 1:
             return self._resolve(tokens[0])
         if tokens[0].match(t.Token.Punctuation, '('):
-            if tokens[-1].match(t.Token.Punctuation, ')'):
-                tokens = tokens[1:-1]
-            else:
-                raise exceptions.ParenthesisDontMatch()
+            tokens = self._get_group(tokens)
         operator = tokens[1]
         if operator.ttype is t.Token.Keyword:
             if operator.match(t.Token.Keyword, 'BETWEEN'):
@@ -34,12 +31,13 @@ class Parser:
             elif operator.match(t.Token.Keyword, 'NOT'):
                 assert(len(tokens) == 3)
                 return self._compare(*tokens)
+            if operator.match(t.Token.Keyword, 'IN'):
+                return self._in(tokens[0], tokens[2])
             else:
                 a = self._resolve(tokens[0])
                 b = self._resolve(tokens[2])
                 return self._operate(a, tokens[1], b)
         else:
-                    
             if len(tokens) > 3:
                 #import ipdb; ipdb.set_trace()
                 raise Exception("Invalid query")
@@ -52,6 +50,22 @@ class Parser:
         second = self._resolve([subject, lte, ceil])
         return first & second
 
+    def _in(self, subject, values):
+        tokens = values.tokens
+        if tokens[0].value == '(':
+            tokens = self._get_group(tokens)
+        else:
+            raise exceptions.ParenthesisExpected('IN')
+
+        if not len(tokens) == 1:
+            raise exceptions.MalformedList
+
+        kwargs = {
+            '%s__in' % subject.value: self._get_list(subject.value, tokens[0].tokens),
+        }
+
+        return Q(**kwargs)
+
     def _operate(self, a, operator, b):
         if operator.match(t.Token.Keyword, 'OR'):
             return a | b
@@ -59,31 +73,44 @@ class Parser:
             return a & b
 
     def _compare(self, subject, operator, predicate):
-        key = subject.value
         # Raise exception if field does not exist
-        field = self._get_field(self.model, key)
-        key, cond = self._make_key(operator, key)
+        key, cond = self._make_key(operator, subject.value)
         kwargs = {}
+        kwargs[key] = self._get_value(subject.value, predicate)
 
+        result = Q(**kwargs)
+        if not cond:
+            result = ~result
+        return result
+
+    def _get_list(self, key, tokens):
+        tokens = self._strip_whitespaces(tokens)
+        objects = []
+        while len(tokens) > 0:
+            next_object = tokens.pop(0)
+            objects.append(self._get_value(key, next_object))
+            if len(tokens) > 0:
+                punctuation = tokens.pop(0)
+                if not punctuation.ttype is t.Token.Punctuation or not punctuation.value == ',':
+                    raise exceptions.MalformedList()
+        return tuple(objects)
+
+    def _get_value(self, key, predicate):
         v = predicate.value
         if v.startswith("'") and v.endswith("'"):
             v = v[1:-1]
         elif v.startswith('"') and v.endswith('"'):
             v = v[1:-1]
 
+        field = self._get_field(key)
         if isinstance(field, fields.DateField):
-            kwargs[key] = datetime.strptime(str(v), self.date_format).date()
-        elif predicate.ttype is t.Token.Literal.Number.Integer:
-            kwargs[key] = int(v)
-        elif isinstance(predicate, sql.Identifier):
-            kwargs[key] = predicate.get_name()
-        elif predicate.ttype is t.Token.Literal.String.Single:
-            kwargs[key] = v
-
-        result = Q(**kwargs)
-        if not cond:
-            result = ~result
-        return result
+            return datetime.strptime(str(v), self.date_format).date()
+        if predicate.ttype is t.Token.Literal.Number.Integer:
+            return int(v)
+        if isinstance(predicate, sql.Identifier):
+            return predicate.get_name()
+        if predicate.ttype is t.Token.Literal.String.Single:
+            return v
 
     def _make_key(self, op, key):
         comp = t.Token.Operator.Comparison
@@ -106,7 +133,9 @@ class Parser:
             return [key, False]
         raise exceptions.UnknownOperator(op.normalized)
 
-    def _get_field(self, model, key):
+    def _get_field(self, key):
+        model = self.model
+
         if isinstance(model, QuerySet):
             qs = model
             if qs.query.annotations.get(key):
@@ -121,3 +150,12 @@ class Parser:
             return model._meta.get_field(path[0])
         except django_exceptions.FieldDoesNotExist:
             raise exceptions.FieldDoesNotExist(key)
+
+    def _get_group(self, tokens):
+        if tokens[-1].match(t.Token.Punctuation, ')'):
+            return tokens[1:-1]
+        else:
+            raise exceptions.ParenthesisDontMatch()
+
+    def _strip_whitespaces(self, tokens):
+        return [ tok for tok in tokens if not tok.ttype is t.Token.Text.Whitespace ]

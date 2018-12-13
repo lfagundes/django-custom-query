@@ -40,6 +40,13 @@ class SingleParserTest(BaseTest):
     def test_not_as_keyword(self):
         self.assertEquals(self.parse("numfield NOT 1"), ~Q(numfield=1))
 
+    def test_in_operator_with_numerical_field(self):
+        self.assertEquals(self.parse("numfield IN (1, 2, 3, 4)"), Q(numfield__in=(1, 2, 3, 4)))
+
+    def test_in_operator_with_string_field(self):
+        self.assertEquals(self.parse("charfield IN ('one', 'two', 'three')"), Q(charfield__in=('one', 'two', 'three')))
+        self.assertEquals(self.parse('charfield IN ("one", "two", "three")'), Q(charfield__in=('one', 'two', 'three')))
+
     def test_single_string(self):
         self.assertEquals(self.parse('charfield=foo'), Q(charfield="foo"))
         self.assertEquals(self.parse('charfield="foo"'), Q(charfield="foo"))
@@ -54,6 +61,7 @@ class SingleParserTest(BaseTest):
 
     def test_related_field_can_be_acessed_with_doc(self):
         self.assertEquals(self.parse('related.name="foo bar"'), Q(related__name="foo bar"))
+
 
 class AnnotationTest(BaseTest):
     def setUp(self):

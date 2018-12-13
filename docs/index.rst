@@ -64,6 +64,7 @@ Changelog
   - Support for annotations
   - Support for date formatting
   - NOT operator
+  - IN operator
 
 - 0.2.0
 
