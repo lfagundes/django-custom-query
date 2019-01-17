@@ -59,6 +59,10 @@ django-custom-query was created by Luis Fagundes and was sponsored by `Spatial D
 Changelog
 =========
 
+- 0.4.0
+
+  - Support for IS NULL and IS NOT NULL queries
+    
 - 0.3.0
 
   - Support for annotations

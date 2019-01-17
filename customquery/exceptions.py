@@ -20,6 +20,10 @@ class UnknownOperator(Exception):
         self.operator = operator
         super().__init__("Operator '%s' is invalid" % operator)
 
+class InvalidIsParameter(Exception):
+    def __init__(self, value):
+        super().__init__("'%s' is not a valid value for IS" % value)
+
 class InvalidQuery(Exception):
     def __init__(self):
         super().__init__("Invalid query")

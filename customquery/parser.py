@@ -36,6 +36,8 @@ class Parser:
                 raise exceptions.InvalidQuery()
             if operator.match(t.Token.Keyword, 'IN'):
                 return self._in(tokens[0], tokens[2])
+            if operator.match(t.Token.Keyword, 'IS'):
+                return self._is(tokens[0], tokens[2])
             else:
                 a = self._resolve(tokens[0])
                 b = self._resolve(tokens[2])
@@ -67,6 +69,19 @@ class Parser:
             '%s__in' % subject.value: self._get_list(subject.value, tokens[0].tokens),
         }
 
+        return Q(**kwargs)
+
+    def _is(self, subject, values):
+        if values.match(t.Token.Keyword, 'NULL'):
+            kwargs = {
+                '%s__isnull' % subject.value: True,
+            }
+        elif values.match(t.Token.Keyword, 'NOT NULL'):
+            kwargs = {
+                '%s__isnull' % subject.value: False,
+            }
+        else:
+            raise exceptions.InvalidIsParameter(values.value)
         return Q(**kwargs)
 
     def _operate(self, a, operator, b):

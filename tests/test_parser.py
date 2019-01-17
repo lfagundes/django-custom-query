@@ -59,6 +59,12 @@ class SingleParserTest(BaseTest):
         self.assertEquals(self.parse('charfield="foo bar"'), Q(charfield="foo bar"))
         self.assertEquals(self.parse("charfield='foo bar'"), Q(charfield="foo bar"))
 
+    def test_is_null(self):
+        self.assertEquals(self.parse('numfield IS NULL'), Q(numfield__isnull=True))
+
+    def test_is_not_null(self):
+        self.assertEquals(self.parse('numfield IS NOT NULL'), Q(numfield__isnull=False))
+
     def test_related_field(self):
         self.assertEquals(self.parse('related__name="foo bar"'), Q(related__name="foo bar"))
 

@@ -5,7 +5,7 @@ class RelatedModel(models.Model):
 
 class TestModel(models.Model):
     charfield = models.CharField(max_length=16)
-    numfield = models.IntegerField()
+    numfield = models.IntegerField(null=True)
     datefield = models.DateField()
     related = models.ForeignKey(RelatedModel, on_delete=models.CASCADE)
     first_name = models.CharField(max_length=16)
