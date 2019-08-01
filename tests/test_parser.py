@@ -17,6 +17,9 @@ class SingleParserTest(BaseTest):
     def test_number(self):
         self.assertEquals(self.parse("numfield=1"), Q(numfield=1))
 
+    def test_number_float(self):
+        self.assertEquals(self.parse("numfield=1.1"), Q(numfield=1.0))
+
     def test_whitespaces_are_ignored(self):
         self.assertEquals(self.parse("numfield = 1"), Q(numfield=1))
         self.assertEquals(self.parse("numfield  = 1"), Q(numfield=1))

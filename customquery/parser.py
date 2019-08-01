@@ -125,6 +125,8 @@ class Parser:
             return datetime.strptime(str(v), self.date_format).date()
         if predicate.ttype is t.Token.Literal.Number.Integer:
             return int(v)
+        if predicate.ttype is t.Token.Literal.Number.Float:
+            return float(v)
         if isinstance(predicate, sql.Identifier):
             return predicate.get_name()
         if predicate.ttype is t.Token.Literal.String.Single:
