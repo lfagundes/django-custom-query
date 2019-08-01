@@ -4,7 +4,7 @@ import os
 setup(name = 'django-custom-query',
       version = '0.4.0',
       description = 'Custom user query parser for Django ORM',
-      long_description = open(os.path.join(os.path.dirname(__file__), "README")).read(),
+      long_description = open(os.path.join(os.path.dirname(__file__), "README.md")).read(),
       author = "Luis Fagundes",
       author_email = "lhfagundes@gmail.com",
       license = "The MIT License",
