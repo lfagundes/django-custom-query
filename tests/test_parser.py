@@ -18,7 +18,7 @@ class SingleParserTest(BaseTest):
         self.assertEquals(self.parse("numfield=1"), Q(numfield=1))
 
     def test_number_float(self):
-        self.assertEquals(self.parse("numfield=1.1"), Q(numfield=1.0))
+        self.assertEquals(self.parse("numfield=1.1"), Q(numfield=1.1))
 
     def test_whitespaces_are_ignored(self):
         self.assertEquals(self.parse("numfield = 1"), Q(numfield=1))
@@ -30,11 +30,9 @@ class SingleParserTest(BaseTest):
         self.assertEquals(self.parse("numfield < 1"), Q(numfield__lt=1))
         self.assertEquals(self.parse("numfield <= 1"), Q(numfield__lte=1))
 
-    def test_basic_operators(self):
-        self.assertEquals(self.parse("numfield > 1"), Q(numfield__gt=1))
-        self.assertEquals(self.parse("numfield >= 1"), Q(numfield__gte=1))
-        self.assertEquals(self.parse("numfield < 1"), Q(numfield__lt=1))
-        self.assertEquals(self.parse("numfield <= 1"), Q(numfield__lte=1))
+    def test_tilda_operator_number(self):
+        self.assertEquals(self.parse("numfield ~ 0.1"), Q(numfield__icontains=0.1))
+        self.assertEquals(self.parse("numfield ~ -0.1"), Q(numfield__icontains=-0.1))
 
     def test_not(self):
         self.assertEquals(self.parse("numfield <> 1"), ~Q(numfield=1))
@@ -61,6 +59,10 @@ class SingleParserTest(BaseTest):
     def test_string_phrase(self):
         self.assertEquals(self.parse('charfield="foo bar"'), Q(charfield="foo bar"))
         self.assertEquals(self.parse("charfield='foo bar'"), Q(charfield="foo bar"))
+
+    def test_string_tilda_operator(self):
+        self.assertEquals(self.parse('charfield~"foo"'), Q(charfield__icontains="foo"))
+        self.assertEquals(self.parse('charfield~"foo bar"'), Q(charfield__icontains="foo bar"))
 
     def test_is_null(self):
         self.assertEquals(self.parse('numfield IS NULL'), Q(numfield__isnull=True))

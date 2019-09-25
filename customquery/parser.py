@@ -145,6 +145,8 @@ class Parser:
             return [key + '__lt', True]
         if op.match(comp, '<='):
             return [key + '__lte', True]
+        if op.match(comp, '~'):
+            return [key + '__icontains', True]
         if op.match(comp, '<>'):
             return [key, False]
         if op.match(comp, '!='):
