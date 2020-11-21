@@ -9,6 +9,8 @@ class Parser:
     def __init__(self, model, date_format='%Y-%m-%d'):
         self.model = model
         self.date_format = date_format
+        self.is_startswith = False
+        self.is_endswith = False
 
     def parse(self, query):
         """Parse SQL-like condition statements and return Django Q objects"""
@@ -92,9 +94,10 @@ class Parser:
 
     def _compare(self, subject, operator, predicate):
         # Raise exception if field does not exist
+        value = self._get_value(subject.value, predicate)
         key, cond = self._make_key(operator, subject.value)
         kwargs = {}
-        kwargs[key] = self._get_value(subject.value, predicate)
+        kwargs[key] = value
 
         result = Q(**kwargs)
         if not cond:
@@ -119,6 +122,13 @@ class Parser:
             v = v[1:-1]
         elif v.startswith('"') and v.endswith('"'):
             v = v[1:-1]
+
+        if v[0] == '%':
+            self.is_endswith = True
+            v = v.replace('%','')
+        if v[-1] == '%':
+            self.is_startswith = True
+            v = v.replace('%','')
 
         field = self._get_field(key)
         if isinstance(field, fields.DateField):
@@ -149,6 +159,14 @@ class Parser:
             return [key, False]
         if op.value == 'NOT':
             return [key, False]
+        if op.match(comp, 'LIKE'):
+            if self.is_endswith and self.is_startswith:
+                return [key + '__contains', True]
+            if self.is_startswith:
+                return [key + '__startswith', True]
+            if self.is_endswith:
+                return [key + '__endswith', True]
+            return [key + '__contains', True]
         raise exceptions.UnknownOperator(op.normalized)
 
     def _get_field(self, key):
