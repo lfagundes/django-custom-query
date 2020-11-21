@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 import os
 
 setup(name = 'django-custom-query',
-      version = '0.4.0',
+      version = '0.4.1',
       description = 'Custom user query parser for Django ORM',
       long_description = open(os.path.join(os.path.dirname(__file__), "README")).read(),
       author = "Luis Fagundes",
