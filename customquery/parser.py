@@ -123,12 +123,14 @@ class Parser:
         elif v.startswith('"') and v.endswith('"'):
             v = v[1:-1]
 
-        if v[0] == '%':
+        self.is_startswith = False
+        self.is_endswith = False
+        if v.startswith('%'):
             self.is_endswith = True
-            v = v.replace('%','')
-        if v[-1] == '%':
+            v = v[1:]
+        if v.endswith('%'):
             self.is_startswith = True
-            v = v.replace('%','')
+            v = v[:-1]
 
         field = self._get_field(key)
         if isinstance(field, fields.DateField):

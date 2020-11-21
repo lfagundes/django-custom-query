@@ -71,6 +71,12 @@ class SingleParserTest(BaseTest):
     def test_related_field_can_be_acessed_with_doc(self):
         self.assertEquals(self.parse('related.name="foo bar"'), Q(related__name="foo bar"))
 
+    def test_like(self):
+        self.assertEquals(self.parse('charfield LIKE "foo"'), Q(charfield__contains="foo"))
+        self.assertEquals(self.parse("charfield LIKE 'foo'"), Q(charfield__contains="foo"))
+        self.assertEquals(self.parse("charfield LIKE '%foo'"), Q(charfield__endswith="foo"))
+        self.assertEquals(self.parse("charfield LIKE 'foo%'"), Q(charfield__startswith="foo"))
+        self.assertEquals(self.parse("charfield LIKE '%foo%'"), Q(charfield__contains="foo"))
 
 class AnnotationTest(BaseTest):
     def setUp(self):
