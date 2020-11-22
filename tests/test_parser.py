@@ -17,6 +17,9 @@ class SingleParserTest(BaseTest):
     def test_number(self):
         self.assertEquals(self.parse("numfield=1"), Q(numfield=1))
 
+    def test_number_float(self):
+        self.assertEquals(self.parse("numfield=1.1"), Q(numfield=1.1))
+
     def test_whitespaces_are_ignored(self):
         self.assertEquals(self.parse("numfield = 1"), Q(numfield=1))
         self.assertEquals(self.parse("numfield  = 1"), Q(numfield=1))
@@ -77,6 +80,12 @@ class SingleParserTest(BaseTest):
         self.assertEquals(self.parse("charfield LIKE '%foo'"), Q(charfield__endswith="foo"))
         self.assertEquals(self.parse("charfield LIKE 'foo%'"), Q(charfield__startswith="foo"))
         self.assertEquals(self.parse("charfield LIKE '%foo%'"), Q(charfield__contains="foo"))
+
+        self.assertEquals(self.parse('charfield NOT LIKE "foo"'), ~Q(charfield__contains="foo"))
+        self.assertEquals(self.parse("charfield NOT LIKE 'foo'"), ~Q(charfield__contains="foo"))
+        self.assertEquals(self.parse("charfield NOT LIKE '%foo'"), ~Q(charfield__endswith="foo"))
+        self.assertEquals(self.parse("charfield NOT LIKE 'foo%'"), ~Q(charfield__startswith="foo"))
+        self.assertEquals(self.parse("charfield NOT LIKE '%foo%'"), ~Q(charfield__contains="foo"))
 
 class AnnotationTest(BaseTest):
     def setUp(self):

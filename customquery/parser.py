@@ -171,6 +171,14 @@ class Parser:
             if self.is_endswith:
                 return [key + '__endswith', True]
             return [key + '__contains', True]
+        if op.match(comp, 'NOT LIKE'):
+            if self.is_endswith and self.is_startswith:
+                return [key + '__contains', False]
+            if self.is_startswith:
+                return [key + '__startswith', False]
+            if self.is_endswith:
+                return [key + '__endswith', False]
+            return [key + '__contains', False]
         raise exceptions.UnknownOperator(op.normalized)
 
     def _get_field(self, key):
