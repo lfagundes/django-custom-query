@@ -2,7 +2,7 @@ from sqlparse import parse, tokens as t, sql
 from datetime import datetime, date
 from django.core import exceptions as django_exceptions
 from . import exceptions
-from django.db.models import fields, Q, QuerySet
+from django.db.models import fields, Q, F, QuerySet
 
 class Parser:
 
@@ -44,7 +44,6 @@ class Parser:
                 return self._operate(a, tokens[1], b)
         else:
             if len(tokens) > 3:
-                #import ipdb; ipdb.set_trace()
                 raise Exception("Invalid query")
             return self._compare(*tokens)
 
@@ -92,9 +91,32 @@ class Parser:
 
     def _compare(self, subject, operator, predicate):
         # Raise exception if field does not exist
-        key, cond = self._make_key(operator, subject.value)
-        kwargs = {}
-        kwargs[key] = self._get_value(subject.value, predicate)
+        if type(subject) is sql.Operation:
+            "This is the case of math expression as a subject."
+            subject_tokens = self._strip_whitespaces(subject.tokens)
+            subject_operator = subject_tokens[1]
+            subject_subject = subject_tokens[0]
+            subject_predicate = subject_tokens[2]
+            key, cond = self._make_key(operator, subject_subject.value)
+
+            # this is a bit off the logic line, but it works than second
+            # term in expression field name or related field
+            value_subject_predicate = subject_predicate.value.replace(".", "__")
+            value_predicate = self._get_value(subject_subject.value, predicate)
+
+            kwargs = {}
+            if subject_operator.value == '+':
+                kwargs[key] = value_predicate - F(value_subject_predicate)
+            elif subject_operator.value == '-':
+                kwargs[key] = value_predicate + F(value_subject_predicate)
+            elif subject_operator.value == '*':
+                kwargs[key] = value_predicate / F(value_subject_predicate)
+            elif subject_operator.value == '/':
+                kwargs[key] = value_predicate * F(value_subject_predicate)
+        else:
+            key, cond = self._make_key(operator, subject.value)
+            kwargs = {}
+            kwargs[key] = self._get_value(subject.value, predicate)
 
         result = Q(**kwargs)
         if not cond:
@@ -125,6 +147,8 @@ class Parser:
             return datetime.strptime(str(v), self.date_format).date()
         if predicate.ttype is t.Token.Literal.Number.Integer:
             return int(v)
+        if predicate.ttype is t.Token.Literal.Number.Float:
+            return float(v)
         if isinstance(predicate, sql.Identifier):
             return predicate.get_name()
         if predicate.ttype is t.Token.Literal.String.Single:
@@ -143,6 +167,8 @@ class Parser:
             return [key + '__lt', True]
         if op.match(comp, '<='):
             return [key + '__lte', True]
+        if op.match(comp, '~'):
+            return [key + '__icontains', True]
         if op.match(comp, '<>'):
             return [key, False]
         if op.match(comp, '!='):
