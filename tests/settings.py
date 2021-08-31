@@ -33,6 +33,6 @@ TEMPLATES = [{
 STATIC_URL = '/static/'
 
 
-# help verify that DEFAULTS is importable from conf.
-def FILTERS_VERBOSE_LOOKUPS():
-    return DEFAULTS['VERBOSE_LOOKUPS']
+# # help verify that DEFAULTS is importable from conf.
+# def FILTERS_VERBOSE_LOOKUPS():
+#     return DEFAULTS['VERBOSE_LOOKUPS']

@@ -1,0 +1,14 @@
+name: Test customquery
+on: push
+
+jobs:
+  test_app:
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout repo
+        uses: actions/checkout@v2
+
+      - name: Start tests in Docker
+        run: docker-compose up --exit-code-from app

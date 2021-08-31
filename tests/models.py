@@ -5,7 +5,7 @@ class RelatedModel(models.Model):
     numfield = models.FloatField(null=True)
     numfield2 = models.FloatField(null=True)
 
-class TestModel(models.Model):
+class MainModel(models.Model):
     charfield = models.CharField(max_length=16)
     numfield = models.IntegerField(null=True)
     numfield2 = models.IntegerField(null=True)
