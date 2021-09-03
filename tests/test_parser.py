@@ -355,3 +355,18 @@ class MultipleLogicalOperatorsTest(BaseTest):
         self.assertEqual(
             self.parse('numfield>-0.3 and numfield < 1 or numfield2 != 10 and numfield2 > 14'),
             Q(numfield__gt=-0.3) & Q(numfield__lt=1) | ~Q(numfield2=10) & Q(numfield2__gt=14))
+
+
+class LogicalOperatorsParenthesisTest(BaseTest):
+
+    def test1(self):
+        self.assertEqual(
+            self.parse('(numfield=1 or numfield > 5) and numfield < 10'),
+            (Q(numfield=1) | Q(numfield__gt=5)) & Q(numfield__lt=10)
+            )
+
+    def test2(self):
+        self.assertEqual(
+            self.parse('numfield=1 and (numfield > 5 or numfield < 10)'),
+            Q(numfield=1) & (Q(numfield__gt=5) | Q(numfield__lt=10))
+            )
