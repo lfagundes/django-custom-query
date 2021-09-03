@@ -13,29 +13,64 @@ class Parser:
     def parse(self, query):
         """Parse SQL-like condition statements and return Django Q objects"""
 
-        result = Q()
         parsed = parse(query)[0]
         return self._resolve(parsed.tokens)
 
     def _resolve(self, tokens):
         tokens = self._strip_whitespaces(tokens)
+
+        # Simple case of one token.
         if len(tokens) == 1:
             return self._resolve(tokens[0])
+
+        # Parsing internals of parenthesis totken.
         if tokens[0].match(t.Token.Punctuation, '('):
             tokens = self._get_group(tokens)
+
+        # Catch cases of numerous AND OR statements.
+        # Reversed direction to grant that first two conditions will be joined first.
+        for i in reversed(range(len(tokens))):
+            if tokens[i].match(t.Keyword, 'AND'):
+                # avoid AND in BETWEEN clause
+                betweenIsThere = True in [tok.match(t.Keyword, 'BETWEEN') for tok in tokens]
+                if not betweenIsThere or i<=2:
+                    return self._resolve(tokens[:i]) & self._resolve(tokens[i+1:])
+                if i>2:
+                    if not tokens[i-2].match(t.Keyword, 'BETWEEN'):
+                        return self._resolve(tokens[:i]) & self._resolve(tokens[i+1:])
+                    
+            if tokens[i].match(t.Keyword, 'OR'):
+                return self._resolve(tokens[:i]) | self._resolve(tokens[i+1:])
+
+        # First catch most specific and unusual case of between
+        for i, tok in enumerate(tokens):
+            if tok.match(t.Keyword, 'BETWEEN'):
+                if len(tokens) == 5:
+                    # only BETWEEN clause (param BETWEEN a AND b)
+                    return self._between(tokens[i-1], tokens[i+1], tokens[i+3])
+                else:
+                    raise exceptions.InvalidQuery()
+
         operator = tokens[1]
+        
+        if operator.match(t.Comparison, ['IN', 'in', 'In', 'iN']):
+            return self._in(tokens[0], tokens[2])
+
+        # this strange regex covers plenty of vairants 'NOT IN', 'Not    In', etc
+        if operator.match(t.Comparison, r'(?i)\bNOT +IN\b', regex=True):
+            return ~self._in(tokens[0], tokens[2])
+
         if operator.ttype is t.Token.Keyword:
-            if operator.match(t.Token.Keyword, 'BETWEEN'):
-                assert(len(tokens) == 5)
-                return self._between(tokens[0], tokens[2], tokens[4])
-            elif operator.match(t.Token.Keyword, 'NOT'):
+            # if operator.match(t.Token.Keyword, 'BETWEEN'):
+            #     assert(len(tokens) == 5)
+            #     return self._between(tokens[0], tokens[2], tokens[4])
+            if operator.match(t.Token.Keyword, 'NOT'):
                 if len(tokens) == 3:
                     return self._compare(*tokens)
                 if len(tokens) == 4 and tokens[2].match(t.Token.Keyword, 'IN'):
                     return ~self._in(tokens[0], tokens[3])
                 raise exceptions.InvalidQuery()
-            if operator.match(t.Token.Keyword, 'IN'):
-                return self._in(tokens[0], tokens[2])
+
             if operator.match(t.Token.Keyword, 'IS'):
                 return self._is(tokens[0], tokens[2])
             else:
@@ -44,8 +79,9 @@ class Parser:
                 return self._operate(a, tokens[1], b)
         else:
             if len(tokens) > 3:
-                raise Exception("Invalid query")
+                raise exceptions.InvalidQuery()
             return self._compare(*tokens)
+
 
     def _between(self, subject, floor, ceil):
         gte = parse('a>=1')[0].tokens[0].tokens[1]

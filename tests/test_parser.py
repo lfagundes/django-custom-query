@@ -49,8 +49,28 @@ class SingleParserTest(BaseTest):
         self.assertEqual(self.parse("numfield IN (1, 2, 3, 4)"),
                           Q(numfield__in=(1, 2, 3, 4)))
 
+    def test_in_operator_with_numerical_field_lower_case(self):
+        self.assertEqual(self.parse("numfield in (1, 2, 3, 4)"),
+                          Q(numfield__in=(1, 2, 3, 4)))
+
     def test_not_in_operator(self):
         self.assertEqual(self.parse("numfield NOT IN (1, 2, 3, 4)"), ~Q(
+            numfield__in=(1, 2, 3, 4)))
+
+    def test_not_in_operator_lower_case(self):
+        self.assertEqual(self.parse("numfield not in (1, 2, 3, 4)"), ~Q(
+            numfield__in=(1, 2, 3, 4)))
+
+    def test_not_in_operator_mix_case1(self):
+        self.assertEqual(self.parse("numfield not IN (1, 2, 3, 4)"), ~Q(
+            numfield__in=(1, 2, 3, 4)))
+
+    def test_not_in_operator_mix_case2(self):
+        self.assertEqual(self.parse("numfield NOT in (1, 2, 3, 4)"), ~Q(
+            numfield__in=(1, 2, 3, 4)))
+
+    def test_not_in_operator_mix_case2(self):
+        self.assertEqual(self.parse("numfield Not iN (1, 2, 3, 4)"), ~Q(
             numfield__in=(1, 2, 3, 4)))
 
     def test_in_operator_with_string_field(self):
@@ -241,16 +261,31 @@ class BetweenTest(BaseTest):
 
     def test_between_number(self):
         self.assertEqual(self.parse('numfield between 1 and 5'),
-                          Q(numfield__gte=1) & Q(numfield__lte=5))
+                         Q(numfield__gte=1) & Q(numfield__lte=5))
+
+    def test_between_number_uppercase(self):
+        self.assertEqual(self.parse('numfield BETWEEN 1 AND 5'),
+                         Q(numfield__gte=1) & Q(numfield__lte=5))    
 
     def test_between_number_mathexpression(self):
         self.assertEqual(self.parse('numfield - numfield2 between 1 and 5'),
-                          Q(numfield__gte=1+F('numfield2')) & Q(numfield__lte=5+F('numfield2')))
+                         Q(numfield__gte=1+F('numfield2')) & Q(numfield__lte=5+F('numfield2')))
 
     def test_between_char(self):
         self.assertEqual(self.parse('charfield between "foo" and "foo bar"'),
-                          Q(charfield__gte="foo") & Q(charfield__lte="foo bar"))
+                         Q(charfield__gte="foo") & Q(charfield__lte="foo bar"))
 
+    def test_between_number_mathexpression_complex(self):
+        self.assertEqual(
+            self.parse('numfield - numfield2 between 1 and 5 and numfield2 < 3'),
+            (Q(numfield__gte=1+F('numfield2')) & Q(numfield__lte=5+F('numfield2'))) & Q(numfield2__lt=3)
+            )
+
+    def test_between_number_mathexpression_complex_surrounded_logical_operators(self):
+        self.assertEqual(
+            self.parse('numfield = 9 OR numfield - numfield2 between 1 and 5 and numfield2 < 3'),
+            (Q(numfield=9) | (Q(numfield__gte=1+F('numfield2')) & Q(numfield__lte=5+F('numfield2')))) & Q(numfield2__lt=3)
+            )
 
 class ValidationTest(BaseTest):
 
@@ -300,9 +335,19 @@ class DateFormatTest(TestCase):
 class MultipleLogicalOperatorsTest(BaseTest):
 
     def test_two_and(self):
-        self.assertEqual(self.parse('numfield=1 and numfield > 5 and numfield < 10)'),
-                          Q(numfield=1) & Q(numfield__gt=5) & Q(numfield__lt=10))
+        self.assertEqual(
+            self.parse('numfield=1 and numfield > 5 and numfield < 10'),
+            Q(numfield=1) & Q(numfield__gt=5) & Q(numfield__lt=10)
+            )
 
-    def test_and_or(self):
-        self.assertEqual(self.parse('numfield=1 and numfield > 5 or numfield < 10)'),
-                          Q(numfield=1) & Q(numfield__gt=5) | Q(numfield__lt=10))
+    def test_two_and_or(self):
+        self.assertEqual(
+            self.parse('numfield=1 and numfield > 5 or numfield < 10'),
+            (Q(numfield=1) & Q(numfield__gt=5)) | Q(numfield__lt=10)
+            )
+
+    def test_three_and_or(self):
+        self.assertEqual(
+            self.parse('numfield=1 and numfield > 5 or numfield < 10 and numfield2 != 4'),
+            ((Q(numfield=1) & Q(numfield__gt=5)) | Q(numfield__lt=10)) & ~Q(numfield2=4)
+            )
