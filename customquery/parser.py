@@ -28,7 +28,13 @@ class Parser:
             tokens = self._get_group(tokens)
 
         # Catch cases of numerous AND OR statements.
-        # Reversed direction to grant that first two conditions will be joined first.
+
+        # AND has higher rang than OR, so AND should be resolved last
+        for i in reversed(range(len(tokens))):
+            
+            if tokens[i].match(t.Keyword, 'OR'):
+                return self._resolve(tokens[:i]) | self._resolve(tokens[i+1:])
+
         for i in reversed(range(len(tokens))):
             if tokens[i].match(t.Keyword, 'AND'):
                 # avoid AND in BETWEEN clause
@@ -38,11 +44,8 @@ class Parser:
                 if i>2:
                     if not tokens[i-2].match(t.Keyword, 'BETWEEN'):
                         return self._resolve(tokens[:i]) & self._resolve(tokens[i+1:])
-                    
-            if tokens[i].match(t.Keyword, 'OR'):
-                return self._resolve(tokens[:i]) | self._resolve(tokens[i+1:])
 
-        # First catch most specific and unusual case of between
+        # Treat between clause
         for i, tok in enumerate(tokens):
             if tok.match(t.Keyword, 'BETWEEN'):
                 if len(tokens) == 5:

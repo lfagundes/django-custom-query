@@ -284,7 +284,7 @@ class BetweenTest(BaseTest):
     def test_between_number_mathexpression_complex_surrounded_logical_operators(self):
         self.assertEqual(
             self.parse('numfield = 9 OR numfield - numfield2 between 1 and 5 and numfield2 < 3'),
-            (Q(numfield=9) | (Q(numfield__gte=1+F('numfield2')) & Q(numfield__lte=5+F('numfield2')))) & Q(numfield2__lt=3)
+            Q(numfield=9) | (Q(numfield__gte=1+F('numfield2')) & Q(numfield__lte=5+F('numfield2'))) & Q(numfield2__lt=3)
             )
 
 class ValidationTest(BaseTest):
@@ -342,12 +342,16 @@ class MultipleLogicalOperatorsTest(BaseTest):
 
     def test_two_and_or(self):
         self.assertEqual(
-            self.parse('numfield=1 and numfield > 5 or numfield < 10'),
-            (Q(numfield=1) & Q(numfield__gt=5)) | Q(numfield__lt=10)
+            self.parse('numfield=1 or numfield > 5 and numfield < 10'),
+            Q(numfield=1) | Q(numfield__gt=5) & Q(numfield__lt=10)
             )
 
     def test_three_and_or(self):
         self.assertEqual(
-            self.parse('numfield=1 and numfield > 5 or numfield < 10 and numfield2 != 4'),
-            ((Q(numfield=1) & Q(numfield__gt=5)) | Q(numfield__lt=10)) & ~Q(numfield2=4)
-            )
+            self.parse('numfield=1 or numfield > 5 and numfield < 10 and numfield2 != 4'),
+            Q(numfield=1) | Q(numfield__gt=5) & Q(numfield__lt=10) & ~Q(numfield2=4))
+
+    def test_four_and_or(self):
+        self.assertEqual(
+            self.parse('numfield>-0.3 and numfield < 1 or numfield2 != 10 and numfield2 > 14'),
+            Q(numfield__gt=-0.3) & Q(numfield__lt=1) | ~Q(numfield2=10) & Q(numfield2__gt=14))
