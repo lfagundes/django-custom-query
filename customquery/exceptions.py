@@ -27,3 +27,13 @@ class InvalidIsParameter(Exception):
 class InvalidQuery(Exception):
     def __init__(self):
         super().__init__("Invalid query")
+
+
+class InvalidFunction(Exception):
+    def __init__(self, value):
+        super().__init__("'%s' is not a valid function. Only the Cone(ra, dec, radius) function is supported." % value)
+
+
+class InvalidConeArguments(Exception):
+    def __init__(self):
+        super().__init__("""Cone function must have three arguments: Cone(center_ra, center_dec, radius). All values in degrees.""")

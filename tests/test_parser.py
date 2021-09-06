@@ -370,3 +370,32 @@ class LogicalOperatorsParenthesisTest(BaseTest):
             self.parse('numfield=1 and (numfield > 5 or numfield < 10)'),
             Q(numfield=1) & (Q(numfield__gt=5) | Q(numfield__lt=10))
             )
+
+
+class ConeSearchTest(BaseTest):
+
+    def test_basic(self):
+        self.assertEqual(self.parse('cone(120.3, 23, 1.0)'), Q(dist__le=1.0))
+        self.assertEqual(self.parse('cone(10, 13, 2)'), Q(dist__le=2.0))
+        self.assertEqual(self.parse('cone(102, -56, 1.2)'), Q(dist__le=1.2))
+
+    def test_complex(self):
+        self.assertEqual(
+            self.parse('numfield>1 and cone(102, -56, 1.2)'),
+            Q(numfield__gt=1) & Q(dist__le=1.2))
+
+        self.assertEqual(
+            self.parse('cone(102, -56, 1.2) OR numfield - numfield2 between 1 and 5'),
+            Q(dist__le=1.2) | (Q(numfield__gte=1+F('numfield2')) & Q(numfield__lte=5+F('numfield2')))
+            )
+
+        self.assertTrue(hasattr(self.parser, 'extra_params'))
+
+        self.assertEqual(self.parser.extra_params['cone_ra'], 102.0)
+        self.assertEqual(self.parser.extra_params['cone_dec'], -56.0)
+        self.assertEqual(self.parser.extra_params['cone_dist'], 1.2)
+
+    def test_wrong_cone_arguments(self):
+        with self.assertRaises(exceptions.InvalidConeArguments):
+            self.parse('cone(120.3, 23, 1.0, 12.3)')
+

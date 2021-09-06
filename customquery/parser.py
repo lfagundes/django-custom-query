@@ -21,7 +21,11 @@ class Parser:
 
         # Simple case of one token.
         if len(tokens) == 1:
-            return self._resolve(tokens[0])
+            if isinstance(tokens[0], sql.Function):
+                # Cone-search function
+                return self._cone(tokens[0])
+            else:
+                return self._resolve(tokens[0])
 
         # Parsing internals of parenthesis totken.
         if tokens[0].match(t.Token.Punctuation, '('):
@@ -242,3 +246,32 @@ class Parser:
 
     def _strip_whitespaces(self, tokens):
         return [ tok for tok in tokens if not tok.ttype is t.Token.Text.Whitespace ]
+
+    def _cone(self, tokens):
+        if isinstance(tokens[0], sql.Identifier):
+            tname = tokens[0].get_name().lower()
+            if tname == 'cone':
+                # remove parentheses
+                tokens_nopars = self._get_group(tokens[1])[0]
+                # remove whitespaces and punctuation
+                cone_values = [ tok for tok in tokens_nopars if (not tok.ttype is t.Token.Text.Whitespace) and (not tok.ttype is t.Token.Punctuation)]
+        
+                if len(cone_values) != 3:
+                    raise exceptions.InvalidConeArguments
+                else:
+                    # This is a weird way returning parameters that will be 
+                    # used to annotate the corresponding Django model and add dist field.
+                    # NOTE! This could potentially cause an error if the table has a dist field.
+
+                    cone_params = dict(
+                        cone_ra = float(cone_values[0].value),
+                        cone_dec = float(cone_values[1].value),
+                        cone_dist = float(cone_values[2].value),
+                        )
+                    self.extra_params = cone_params
+
+                    return Q(dist__le=cone_params['cone_dist'])
+            else:
+                raise exceptions.InvalidFunction(tname)
+        else:
+            raise exceptions.InvalidQuery()
