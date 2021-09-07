@@ -260,9 +260,8 @@ class Parser:
                 if len(cone_values) != 3:
                     raise exceptions.InvalidConeArguments
                 else:
-                    # This is a weird way returning parameters that will be 
-                    # used to annotate the corresponding Django model and add dist field.
-                    # NOTE! This could potentially cause an error if the table has a cone_dist field.
+                    # This is a weird way returning Cone query parameters that will be 
+                    # used to annotate the corresponding Django model
 
                     cone_params = dict(
                         cone_ra = float(cone_values[0].value),
@@ -278,10 +277,10 @@ class Parser:
                     # Extend dictionary with Cone parameters
                     self.extra_params['cones'].append(cone_params)
 
-                    # Build and return corresponding Django Q object on the cone_dist
-                    # which has to be created using `annotate' statement.
+                    # Build and return corresponding Django Q object with boolean
+                    # statement cone_query=1 or cone_query1=1 etc
                     kwargs = dict()
-                    kwargs[f"cone_dist{cone_index_str}__le"] = cone_params["cone_radius"]
+                    kwargs[f"cone_query{cone_index_str}"] = 1
 
                     return Q(**kwargs)
             else:
