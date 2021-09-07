@@ -9,6 +9,7 @@ class Parser:
     def __init__(self, model, date_format='%Y-%m-%d'):
         self.model = model
         self.date_format = date_format
+        self.extra_params = dict(cones=[])
 
     def parse(self, query):
         """Parse SQL-like condition statements and return Django Q objects"""
@@ -261,16 +262,28 @@ class Parser:
                 else:
                     # This is a weird way returning parameters that will be 
                     # used to annotate the corresponding Django model and add dist field.
-                    # NOTE! This could potentially cause an error if the table has a dist field.
+                    # NOTE! This could potentially cause an error if the table has a cone_dist field.
 
                     cone_params = dict(
                         cone_ra = float(cone_values[0].value),
                         cone_dec = float(cone_values[1].value),
-                        cone_dist = float(cone_values[2].value),
+                        cone_radius = float(cone_values[2].value),
                         )
-                    self.extra_params = cone_params
 
-                    return Q(dist__le=cone_params['cone_dist'])
+                    # Check whether this is the first Cone statement or 
+                    # there are already several in the query.
+                    cone_index = len(self.extra_params['cones'])
+                    cone_index_str = "" if cone_index == 0 else str(cone_index)
+
+                    # Extend dictionary with Cone parameters
+                    self.extra_params['cones'].append(cone_params)
+
+                    # Build and return corresponding Django Q object on the cone_dist
+                    # which has to be created using `annotate' statement.
+                    kwargs = dict()
+                    kwargs[f"cone_dist{cone_index_str}__le"] = cone_params["cone_radius"]
+
+                    return Q(**kwargs)
             else:
                 raise exceptions.InvalidFunction(tname)
         else:
