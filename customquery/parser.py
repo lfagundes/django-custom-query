@@ -280,7 +280,7 @@ class Parser:
                     # Build and return corresponding Django Q object with boolean
                     # statement cone_query=1 or cone_query1=1 etc
                     kwargs = dict()
-                    kwargs[f"cone_query{cone_index_str}"] = 1
+                    kwargs[f"cone_query{cone_index_str}"] = True
 
                     return Q(**kwargs)
             else:

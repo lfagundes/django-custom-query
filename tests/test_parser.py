@@ -375,7 +375,7 @@ class LogicalOperatorsParenthesisTest(BaseTest):
 class ConeSearchTest(BaseTest):
 
     def test_basic1(self):
-        self.assertEqual(self.parse('cone(120.3, 23, 1.0)'), Q(cone_query=1))
+        self.assertEqual(self.parse('cone(120.3, 23, 1.0)'), Q(cone_query=True))
 
         self.assertTrue(hasattr(self.parser, 'extra_params'))
         self.assertEqual(len(self.parser.extra_params['cones']), 1)
@@ -388,7 +388,7 @@ class ConeSearchTest(BaseTest):
         self.parser.extra_params['cones'] = []
 
     def test_basic2(self):
-        self.assertEqual(self.parse('cone(10, -13, 2)'), Q(cone_query=1))
+        self.assertEqual(self.parse('cone(10, -13, 2)'), Q(cone_query=True))
 
         self.assertTrue(hasattr(self.parser, 'extra_params'))
         self.assertEqual(len(self.parser.extra_params['cones']), 1)
@@ -400,7 +400,7 @@ class ConeSearchTest(BaseTest):
         self.parser.extra_params['cones'] = []
 
     def test_basic3(self):
-        self.assertEqual(self.parse('cone(102, -56, 1.2)'), Q(cone_query=1))
+        self.assertEqual(self.parse('cone(102, -56, 1.2)'), Q(cone_query=True))
 
         self.assertEqual(self.parser.extra_params['cones'][0]['cone_ra'], 102.0)
         self.assertEqual(self.parser.extra_params['cones'][0]['cone_dec'], -56.0)
@@ -411,7 +411,7 @@ class ConeSearchTest(BaseTest):
     def test_complex1(self):
         self.assertEqual(
             self.parse('numfield>1 and cone(102, -56, 1.2)'),
-            Q(numfield__gt=1) & Q(cone_query=1))
+            Q(numfield__gt=1) & Q(cone_query=True))
         
 
         self.assertEqual(self.parser.extra_params['cones'][0]['cone_ra'], 102.0)
@@ -423,7 +423,7 @@ class ConeSearchTest(BaseTest):
     def test_complex2(self):
         self.assertEqual(
             self.parse('cone(102, -56, 1.2) OR numfield - numfield2 between 1 and 5'),
-            Q(cone_query=1) | (Q(numfield__gte=1+F('numfield2')) & Q(numfield__lte=5+F('numfield2')))
+            Q(cone_query=True) | (Q(numfield__gte=1+F('numfield2')) & Q(numfield__lte=5+F('numfield2')))
             )
 
         self.assertTrue(hasattr(self.parser, 'extra_params'))
@@ -441,7 +441,7 @@ class ConeSearchTest(BaseTest):
     def test_two_cones(self):
         self.assertEqual(
             self.parse('cone(120.3, 23, 1.0) or cone(10.3, -23, 1.5)'),
-            Q(cone_query=1) | Q(cone_query1=1))
+            Q(cone_query=True) | Q(cone_query1=True))
 
         self.assertTrue(hasattr(self.parser, 'extra_params'))
         self.assertEqual(len(self.parser.extra_params['cones']), 2)
